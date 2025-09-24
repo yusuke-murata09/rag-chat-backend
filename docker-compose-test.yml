@@ -1,7 +1,7 @@
 version: "3.0"
 
 services:
-  api:
+  api-test:
     container_name: "rag-chat-api-test"
     volumes:
       - ./src/rag_chat_backend:/rag_chat_backend
@@ -16,20 +16,26 @@ services:
       - TEST_DB_DATABASE=${TEST_DB_DATABASE}
       - TEST_DB_USERNAME=${TEST_DB_USERNAME}
       - TEST_DB_PASSWORD=${TEST_DB_PASSWORD}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION}
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+      - AZURE_OPENAI_BASE_ENDPOINT=${AZURE_OPENAI_BASE_ENDPOINT}
+      - AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME=${AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME}
+      - AZURE_OPENAI_LLM_DEPLOYMENT_NAME=${AZURE_OPENAI_LLM_DEPLOYMENT_NAME}
+      - AZURE_OPENAI_LLM_MODEL_NAME=${AZURE_OPENAI_LLM_MODEL_NAME}
     depends_on:
-      test-db:
+      db-test:
         condition: service_healthy
     ports:
       - 8001:8000
 
-  test-db:
-    container_name: "test-rag-chat-db"
+  db-test:
+    container_name: "rag-chat-db-test"
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: ${TEST_DB_ROOT_PASSWORD}
       MYSQL_DATABASE: ${TEST_DB_DATABASE}
-      MYSQL_USER: testuser
-      MYSQL_PASSWORD: testpass
+      MYSQL_USER: ${TEST_DB_USERNAME}
+      MYSQL_PASSWORD: ${TEST_DB_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD"]
       timeout: 5s
