@@ -1,0 +1,39 @@
+version: "3.0"
+
+services:
+  api:
+    container_name: "rag-chat-api-test"
+    volumes:
+      - ./src/rag_chat_backend:/rag_chat_backend
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    environment:
+      - PYTHONPATH=/
+      # テスト用DB設定
+      - TEST_DB_HOST=${TEST_DB_HOST}
+      - TEST_DB_PORT=${TEST_DB_PORT}
+      - TEST_DB_DATABASE=${TEST_DB_DATABASE}
+      - TEST_DB_USERNAME=${TEST_DB_USERNAME}
+      - TEST_DB_PASSWORD=${TEST_DB_PASSWORD}
+    depends_on:
+      test-db:
+        condition: service_healthy
+    ports:
+      - 8001:8000
+
+  test-db:
+    container_name: "test-rag-chat-db"
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: ${TEST_DB_DATABASE}
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpass
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD"]
+      timeout: 5s
+      interval: 5s
+      retries: 10
+    ports:
+      - 3307:3306
