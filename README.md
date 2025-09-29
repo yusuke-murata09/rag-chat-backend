@@ -97,3 +97,100 @@
     ```
     pytest
     ```
+
+
+
+# ブランチ運用について
+
+## 概要
+   - 本プロジェクトでは、効率的な開発とコード品質の維持を目的としたGitブランチ運用ルールを定めている。社内学習用プロジェクトのため、通常のreleaseブランチを経由したリリースフローは省略し、シンプルな運用を採用
+
+## ブランチ構成
+
+### main
+ - 目的: 本番環境の状態を管理
+ - 特徴: 常に安定した状態を保つ
+ - マージ元: developブランチ
+
+### develop
+ - 目的: 開発版の統合ブランチ
+ - 特徴: 各機能開発の統合地点
+ - マージ元: feature/, bugfix/
+ - マージ先: mainブランチ
+
+### feature
+ - 目的: 新機能開発用ブランチ
+ - 作成元・マージ先: developブランチ
+
+### bugfix
+ - 目的: developにマージ済み機能のバグ修正用
+ - 作成元・マージ先: developブランチ
+ 
+### 運用フロー図
+ ```mermaid
+   gitGraph
+      commit id: "初期化"
+      branch develop order:1
+      checkout develop
+      commit id: "開発環境構築"
+      
+      branch feature order:2
+      checkout feature
+      commit id: "新機能開発"
+      commit id: "機能完成"
+      checkout develop
+      merge feature
+      commit id: "機能マージ完了"
+      
+      branch bugfix order:3
+      checkout bugfix
+      commit id: "バグ修正"
+      commit id: "修正完了"
+      checkout develop
+      merge bugfix
+      commit id: "バグ修正マージ完了"
+      
+      checkout main
+      merge develop
+      commit id: "本番環境反映"
+ ```
+
+## 使用時のルール
+
+### 開発フロー（マージ・被マージ）
+1. developブランチからfeature/bugfixブランチ作成
+   - 各担当者が開発・修正作業
+   - タスク毎にブランチを作成
+
+2. Pull Request作成
+   - developブランチへのPull Requestを作成
+   - タイトルに MYIS-{チケット番号} を先頭に記載
+      - ex）``MYIS-1234:ログイン機能追加``
+   - Pull Requestのテンプレート通りに記載すること
+   - CIによる単体テストクリアが必須
+
+3. コードレビュー
+   - 管理者がソースレビューを実施
+   - 承認後にマージ
+
+4. mainブランチへの反映
+   - SP完了後に実施：developにマージ済みのブランチ（完了済みタスク）のみが対象となる
+   - developブランチからmainブランチにマージ（例外: 本プロジェクトはリリースがないため、releaseブランチを省略してdevelop → mainに直接マージする）
+
+### タスク別使用方法
+- 新機能開発タスク
+   - 使用ブランチ: feature/
+   - 命名規則: feature/MYIS-{チケット番号}
+      - ex）``feature/MYIS-1234``
+
+- 既存機能バグ修正タスク
+   - 使用ブランチ: bugfix/
+   - 命名規則: bugfix/MYIS-{チケット番号}
+      - ex）``bugfix/MYIS-1234``
+   - 例外: チケット番号が追えない場合など不明な場合は、機能名や修正内容を明記する
+      - ex）``bugfix/login-error-handling``
+
+### 禁止事項
+ - 直接Push禁止: main、developブランチへの直接Push
+ - Pull Request必須: すべてのマージはPull Requestを経由
+ - CI未通過でのマージ禁止: 単体テストクリアが必須条件
